@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JARVIS - Personal Assistant</title>
+<style>
+body{margin:0;background:#071018;color:#eaf7ff;font-family:Arial,sans-serif;text-align:center}
+.wrap{max-width:520px;margin:auto;padding:28px 18px}
+h1{font-size:42px;letter-spacing:5px;margin:20px 0 4px}
+.sub{opacity:.7;margin-bottom:28px}
+.arc{width:180px;height:180px;border-radius:50%;margin:20px auto;border:2px solid #48d7ff;box-shadow:0 0 30px #167da0;display:flex;align-items:center;justify-content:center;font-size:70px}
+button{width:90%;max-width:360px;padding:17px;margin:9px;border:0;border-radius:30px;background:#12384a;color:white;font-size:18px}
+button.main{background:#087ea4}
+#status{min-height:28px;margin:18px;font-size:17px}
+#reply{background:#0d1d27;border-radius:18px;padding:18px;text-align:left;line-height:1.5;min-height:45px}
+.small{font-size:13px;opacity:.65;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>JARVIS</h1>
+<div class="sub">Your personal voice assistant</div>
+<div class="arc">🤖</div>
+<button class="main" id="listen">🎙️ JARVIS से बात करो</button>
+<button id="speak">🔊 जवाब दोहराओ</button>
+<div id="status">तैयार हूँ।</div>
+<div id="reply">नमस्ते! मैं JARVIS हूँ। मुझे बोलकर आज़माओ।</div>
+<div class="small">उदाहरण: “समय क्या है?”, “नमस्ते”, “मेरा नाम क्या है?”, “JARVIS बंद हो जाओ।”</div>
+</div>
+<script>
+const statusEl=document.getElementById('status');
+const replyEl=document.getElementById('reply');
+let lastReply="नमस्ते! मैं JARVIS हूँ। मुझे बोलकर आज़माओ।";
+function say(t){lastReply=t; replyEl.textContent=t; if('speechSynthesis' in window){speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';u.rate=1; speechSynthesis.speak(u);}}
+function answer(q){
+ q=q.toLowerCase();
+ if(q.includes('समय')||q.includes('time')) return 'अभी समय '+new Date().toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'})+' है।';
+ if(q.includes('नमस्ते')||q.includes('hello')||q.includes('hi')) return 'नमस्ते! मैं JARVIS हूँ। बताइए, मैं आपकी क्या मदद करूँ?';
+ if(q.includes('नाम')) return 'मेरा नाम JARVIS है।';
+ if(q.includes('तारीख')||q.includes('date')) return 'आज '+new Date().toLocaleDateString('hi-IN',{day:'numeric',month:'long',year:'numeric'})+' है।';
+ if(q.includes('धन्यवाद')||q.includes('thank')) return 'आपका स्वागत है।';
+ if(q.includes('बंद')||q.includes('stop')) return 'ठीक है। जब जरूरत हो, फिर बुलाइए।';
+ return 'मैंने आपकी बात सुनी: '+q+'। अभी मेरा basic version चल रहा है। अगले version में हम AI brain जोड़ सकते हैं।';
+}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){statusEl.textContent='इस browser में voice recognition उपलब्ध नहीं है। Chrome में कोशिश करें।';}
+else{
+ const r=new SR(); r.lang='hi-IN'; r.interimResults=false; r.continuous=false;
+ r.onstart=()=>statusEl.textContent='🎙️ सुन रहा हूँ...';
+ r.onerror=e=>statusEl.textContent='आवाज़ सुनने में समस्या हुई। फिर कोशिश करें।';
+ r.onresult=e=>{const q=e.results[0][0].transcript;statusEl.textContent='आपने कहा: '+q;say(answer(q));};
+ r.onend=()=>{if(statusEl.textContent==='🎙️ सुन रहा हूँ...')statusEl.textContent='तैयार हूँ।';};
+ document.getElementById('listen').onclick=()=>r.start();
+}
+document.getElementById('speak').onclick=()=>say(lastReply);
+</script>
+</body>
+</html>
